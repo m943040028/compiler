@@ -34,9 +34,6 @@ def _flatten_to_atomic(n, alloc):
         n.nodes[0] = atomic_node
         return n, new_nodes
 
-    elif isinstance(n, Discard):
-        return _flatten_to_atomic(n.expr, alloc)
-
     elif isinstance(n, Assign):
         atomic_node, new_nodes = _flatten_to_atomic(n.expr, alloc)
         n.expr = atomic_node
@@ -61,6 +58,11 @@ def _flatten_to_atomic(n, alloc):
         new_assign = Assign([AssName(new_name, 'OP_ASSIGN')], n)
 
         return Name(new_name), [new_assign]
+
+    elif isinstance(n, Discard):
+        atomic_node, new_nodes = _flatten_to_atomic(n.expr, alloc)
+        n.expr = atomic_node
+        return n, new_nodes
 
     elif isinstance(n, Name):
         return n, []
@@ -113,3 +115,6 @@ def show_expression(n):
 
     elif isinstance(n, Const):
         return str(n.value)
+
+    elif isinstance(n, Discard):
+        return ""

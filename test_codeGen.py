@@ -10,7 +10,7 @@ class TestCodeGen(TestCase):
 
         ast = compiler.parse('1')
         flatten_expression(ast)
-        expect = '1'
+        expect = ''
         self.assertEquals(show_expression(ast), expect)
 
         ast = compiler.parse('a = 1')
@@ -21,7 +21,7 @@ class TestCodeGen(TestCase):
         # check if this is Correct !
         ast = compiler.parse('input()')
         flatten_expression(ast)
-        expect = 'tmp0 = input()\ntmp0'
+        expect = 'tmp0 = input()\n'
         self.assertEquals(show_expression(ast), expect)
 
         ast = compiler.parse('print 1')
