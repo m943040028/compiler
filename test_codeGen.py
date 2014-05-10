@@ -18,10 +18,17 @@ class TestCodeGen(TestCase):
         expect = 'a = 1\n'
         self.assertEquals(show_expression(ast), expect)
 
-        # check if this is Correct !
         ast = compiler.parse('input()')
         flatten_expression(ast)
         expect = 'tmp0 = input()\n'
+        self.assertEquals(show_expression(ast), expect)
+
+        ast = compiler.parse('input() + 20')
+        flatten_expression(ast)
+        expect = (
+            'tmp0 = input()\n'
+            'tmp1 = tmp0 + 20\n'
+        )
         self.assertEquals(show_expression(ast), expect)
 
         ast = compiler.parse('print 1')
