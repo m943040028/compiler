@@ -53,11 +53,21 @@ def _flatten_to_atomic(n, alloc):
 
         return Name(new_name), new_nodes
 
-    elif isinstance(n, UnarySub) or isinstance(n, CallFunc):
+    elif isinstance(n, CallFunc):
         new_name = alloc.new_variable()
         new_assign = Assign([AssName(new_name, 'OP_ASSIGN')], n)
 
         return Name(new_name), [new_assign]
+
+    elif isinstance(n, UnarySub):
+        atomic_node, new_nodes = _flatten_to_atomic(n.expr, alloc)
+
+        new_name = alloc.new_variable()
+        new_assign = Assign([AssName(new_name, 'OP_ASSIGN')], n)
+        n.expr = atomic_node
+        new_nodes.append(new_assign)
+
+        return Name(new_name), new_nodes
 
     elif isinstance(n, Discard):
         atomic_node, new_nodes = _flatten_to_atomic(n.expr, alloc)
