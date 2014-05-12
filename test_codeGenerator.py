@@ -70,7 +70,60 @@ class TestCodeGenerator(TestCase):
         codegen = CodeGenerator()
         output = StringIO()
 
-        ast = compiler.parse('print -input() + 20')
+        ast = compiler.parse('print 20')
+        flatten_expression(ast)
+        output.truncate(0)
+        codegen.generate(ast, output)
+        expect = (
+            '\tpushl $20\n'
+            '\tcall print_int_nl\n'
+            '\taddl $4, %esp\n'
+        )
+        self.assertEquals(expect, output.getvalue())
+
+        ast = compiler.parse('print input()')
+        flatten_expression(ast)
+        output.truncate(0)
+        codegen.generate(ast, output)
+        expect = (
+            '\tcall input\n'
+            '\tmovl %eax, -4(%ebp)\n'
+            '\tpushl -4(%ebp)\n'
+            '\tcall print_int_nl\n'
+            '\taddl $4, %esp\n'
+        )
+        self.assertEquals(expect, output.getvalue())
+
+        ast = compiler.parse('input() + 20')
+        flatten_expression(ast)
+        output.truncate(0)
+        codegen.generate(ast, output)
+        expect = (
+            '\tcall input\n'
+            '\tmovl %eax, -4(%ebp)\n'
+            '\tmovl -4(%ebp), %eax\n'
+            '\taddl $20, %eax\n'
+            '\tmovl %eax, -8(%ebp)\n'
+        )
+        self.assertEquals(expect, output.getvalue())
+
+        ast = compiler.parse('input() + input()')
+        flatten_expression(ast)
+        output.truncate(0)
+        codegen.generate(ast, output)
+        expect = (
+            '\tcall input\n'
+            '\tmovl %eax, -4(%ebp)\n'
+            '\tcall input\n'
+            '\tmovl %eax, -8(%ebp)\n'
+            '\tmovl -4(%ebp), %eax\n'
+            '\tmovl -8(%ebp), %ebx\n'
+            '\taddl %ebx, %eax\n'
+            '\tmovl %eax, -12(%ebp)\n'
+        )
+        self.assertEquals(expect, output.getvalue())
+
+        ast = compiler.parse('-input() + 20')
         flatten_expression(ast)
         output.truncate(0)
         codegen.generate(ast, output)
@@ -83,9 +136,31 @@ class TestCodeGenerator(TestCase):
             '\tmovl -8(%ebp), %eax\n'
             '\taddl $20, %eax\n'
             '\tmovl %eax, -12(%ebp)\n'
-            '\tpushl -12(%ebp)\n'
-            '\tcall print_int_nl\n'
-            '\taddl $4, %esp\n'
+        )
+        self.assertEquals(expect, output.getvalue())
+
+        ast = compiler.parse('20 + input()')
+        flatten_expression(ast)
+        output.truncate(0)
+        codegen.generate(ast, output)
+        expect = (
+            '\tcall input\n'
+            '\tmovl %eax, -4(%ebp)\n'
+            '\tmovl $20, %eax\n'
+            '\tmovl -4(%ebp), %ebx\n'
+            '\taddl %ebx, %eax\n'
+            '\tmovl %eax, -8(%ebp)\n'
+        )
+        self.assertEquals(expect, output.getvalue())
+
+        ast = compiler.parse('20 + 12')
+        flatten_expression(ast)
+        output.truncate(0)
+        codegen.generate(ast, output)
+        expect = (
+            '\tmovl $20, %eax\n'
+            '\taddl $12, %eax\n'
+            '\tmovl %eax, -4(%ebp)\n'
         )
         self.assertEquals(expect, output.getvalue())
 

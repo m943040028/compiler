@@ -44,15 +44,18 @@ class CodeGenerator:
             output.write('\tcall %s\n' % n.node.name)
         if isinstance(n, Add):
             if isinstance(n.left, Const):
-                output.write('\tmovl %%%d, %%eax\n' % n.left.name)
+                output.write('\tmovl $%d, %%eax\n' % n.left.value)
             elif isinstance(n.left, Name):
                 self._generate_load_variable(n.left, '%eax', output)
             if isinstance(n.right, Const):
                 output.write('\taddl $%d, %%eax\n' % n.right.value)
-            elif isinstance(n.left, Name):
-                self._generate_load_variable(n.left, '%ebx', output)
-                output.write('\taddl %ebx, %%eax\n')
+            elif isinstance(n.right, Name):
+                self._generate_load_variable(n.right, '%ebx', output)
+                output.write('\taddl %ebx, %eax\n')
         if isinstance(n, Printnl):
-            output.write('\tpushl %d(%%ebp)\n' % _map_variable_name_to_stack_offset(n.nodes[0]))
+            if isinstance(n.nodes[0], Name):
+                output.write('\tpushl %d(%%ebp)\n' % _map_variable_name_to_stack_offset(n.nodes[0]))
+            if isinstance(n.nodes[0], Const):
+                output.write('\tpushl $%d\n' % n.nodes[0].value)
             output.write('\tcall print_int_nl\n')
             output.write('\taddl $4, %esp\n')
